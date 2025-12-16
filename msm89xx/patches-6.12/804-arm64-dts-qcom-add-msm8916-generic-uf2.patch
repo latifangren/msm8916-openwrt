@@ -1,177 +1,42 @@
 --- /dev/null
 +++ b/arch/arm64/boot/dts/qcom/msm8916-generic-uf02.dts
-@@ -0,0 +1,168 @@
-+/*
-+ * XIDOL K5188 MSM8916 4G USB Modem Device Tree
-+ * OpenWrt/LEDE Board Support Package
-+ * 
-+ * This DTS fixes the SIM detection bug found in stock ROM
-+ * GPIO Configuration:
-+ * - GPIO 114 (0x72): SIM Hotplug Detection (CRITICAL FIX)
-+ * - GPIO 119 (0x77): eSIM 1 Enable (CRITICAL FIX)
-+ * - GPIO 14 (0x0e): eSIM 2 Enable (CRITICAL FIX)
-+ * - GPIO 12 (0x0c): eSIM 3 Enable (CRITICAL FIX)
-+ */
+@@ -0,0 +1,39 @@
++// SPDX-License-Identifier: GPL-2.0-only
 +
-+#include "msm8916.dtsi"
-+#include "pm8916.dtsi"
++/dts-v1/;
 +
-+#include <dt-bindings/gpio/gpio.h>
-+#include <dt-bindings/interrupt-controller/irq.h>
++#include "msm8916-ufi.dtsi"
++
++#include <dt-bindings/leds/common.h>
 +
 +/ {
-+	model = "XIDOL K5188 MSM8916 4G Modem";
-+	compatible = "xidol,k5188-msm8916", "qcom,msm8916";
++	model = "UF02 4G Modem Stick";
++	compatible = "uf02,250605v0s", "qcom,msm8916";
++};
 +
-+	memory {
-+		reg = <0 0 0 0x20000000>;
-+	};
++&button_restart {
++	gpios = <&tlmm 23 GPIO_ACTIVE_LOW>;
++};
 +
-+	chosen {
-+		stdout-path = "/soc/serial@78b0000:115200n8";
-+		bootargs = "root=/dev/mmcblk0p2 rw rootwait console=ttyMSM0,115200n8";
-+	};
++&led_r {
++	gpios = <&tlmm 72 GPIO_ACTIVE_HIGH>;
++};
 +
-+	soc {
-+		/*
-+		 * GPIO LED and Button Configuration
-+		 * Restored from missing.dts to fix OpenWrt SIM detection bug
-+		 */
-+		gpio_leds {
-+			compatible = "gpio-leds";
-+			status = "okay";
-+			pinctrl-names = "default";
-+			pinctrl-0 = <&tlmm_gpio_leds>;
++&led_g {
++	function = LED_FUNCTION_WAN;
++	gpios = <&tlmm 71 GPIO_ACTIVE_HIGH>;
++};
 +
-+			/* System Test LED */
-+			ftest {
-+				gpios = <&tlmm 106 GPIO_ACTIVE_HIGH>;
-+				label = "ftest";
-+				linux,default-trigger = "none";
-+				default-state = "keep";
-+				retain-state-suspended;
-+			};
++&led_b {
++	function = LED_FUNCTION_WLAN;
++	gpios = <&tlmm 73 GPIO_ACTIVE_HIGH>;
++};
 +
-+			/* WiFi Status LED - GPIO 73 */
-+			wifistatus {
-+				gpios = <&tlmm 73 GPIO_ACTIVE_HIGH>;
-+				label = "wifistatus";
-+				linux,default-trigger = "none";
-+				default-state = "off";
-+				retain-state-suspended;
-+			};
++&button_default {
++	pins = "gpio23";
++	bias-pull-up;
++};
 +
-+			/* 4G Connection Indicator 1 - GPIO 71 */
-+			4g_1 {
-+				gpios = <&tlmm 71 GPIO_ACTIVE_HIGH>;
-+				label = "4g_1";
-+				linux,default-trigger = "none";
-+				default-state = "off";
-+				retain-state-suspended;
-+			};
-+
-+			/* 4G Type/Band Indicator - GPIO 72 */
-+			4g_type {
-+				gpios = <&tlmm 72 GPIO_ACTIVE_HIGH>;
-+				label = "4g_type";
-+				linux,default-trigger = "none";
-+				default-state = "off";
-+				retain-state-suspended;
-+			};
-+
-+			/*
-+			 * CRITICAL FIX: eSIM Enable GPIOs
-+			 * These were missing in work.dts, causing SIM detection failure
-+			 */
-+
-+			/* eSIM 1 Enable - GPIO 119 (0x77) */
-+			esim1_en {
-+				gpios = <&tlmm 119 GPIO_ACTIVE_HIGH>;
-+				label = "esim1_en";
-+				linux,default-trigger = "none";
-+				default-state = "keep";
-+				retain-state-suspended;
-+			};
-+
-+			/* eSIM 2 Enable - GPIO 14 (0x0e) */
-+			esim2_en {
-+				gpios = <&tlmm 14 GPIO_ACTIVE_HIGH>;
-+				label = "esim2_en";
-+				linux,default-trigger = "none";
-+				default-state = "keep";
-+				retain-state-suspended;
-+			};
-+
-+			/* eSIM 3 Enable - GPIO 12 (0x0c) */
-+			esim3_en {
-+				gpios = <&tlmm 12 GPIO_ACTIVE_HIGH>;
-+				label = "esim3_en";
-+				linux,default-trigger = "none";
-+				default-state = "keep";
-+				retain-state-suspended;
-+			};
-+
-+			/*
-+			 * CRITICAL FIX: SIM Card Hotplug Detection
-+			 * This GPIO enables Linux/OpenWrt to detect SIM card insertion/removal
-+			 * Without this, ModemManager and OpenWrt cannot detect SIM changes
-+			 */
-+			sim_hotplug {
-+				gpios = <&tlmm 114 GPIO_ACTIVE_HIGH>;
-+				label = "sim_hotplug";
-+				linux,default-trigger = "none";
-+				default-state = "keep";
-+				retain-state-suspended;
-+			};
-+
-+			/* Battery Status LED - GPIO 36 */
-+			bat1 {
-+				gpios = <&tlmm 36 GPIO_ACTIVE_HIGH>;
-+				label = "bat1";
-+				linux,default-trigger = "none";
-+				default-state = "off";
-+				retain-state-suspended;
-+			};
-+		};
-+
-+		gpio_keys {
-+			compatible = "gpio-keys";
-+			input-name = "gpio-keys";
-+			pinctrl-names = "tlmm_gpio_key_active", "tlmm_gpio_key_suspend";
-+			pinctrl-0 = <&tlmm_gpio_key_active>;
-+			pinctrl-1 = <&tlmm_gpio_key_suspend>;
-+
-+			key_freset {
-+				label = "key_freset";
-+				gpios = <&tlmm 37 GPIO_ACTIVE_LOW>;
-+				linux,input-type = <1>;
-+				linux,code = <216>;
-+				gpio-key,wakeup;
-+				debounce-interval = <60>;
-+			};
-+		};
-+	};
-+
-+	tlmm: pinctrl@1000000 {
-+		tlmm_gpio_leds: gpio-leds-pins {
-+			pins = "gpio71", "gpio72", "gpio73", "gpio119", "gpio14", "gpio12", "gpio114", "gpio36", "gpio106";
-+			function = "gpio";
-+			drive-strength = <2>;
-+			bias-disable;
-+		};
-+
-+		tlmm_gpio_key_active: gpio-key-active {
-+			pins = "gpio37";
-+			function = "gpio";
-+			drive-strength = <2>;
-+			bias-pull-up;
-+		};
-+
-+		tlmm_gpio_key_suspend: gpio-key-suspend {
-+			pins = "gpio37";
-+			function = "gpio";
-+			drive-strength = <2>;
-+			bias-pull-up;
-+		};
-+	};
++&gpio_leds_default {
++	pins = "gpio71", "gpio72", "gpio73";
 +};
